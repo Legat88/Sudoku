@@ -25,30 +25,42 @@ $(document).ready(function () {
                         processData: false,
                         contentType: false
                     }).done(function (result) {
+                        var json_result = result;
+                        // console.log(json_result);
                         $('form p').text("Файл загружен");
                         $('table').show();
                         var finderText;
-                        for (var i = 0; i < result.length; i++) {
-                            for (var j = 0; j < result[i].length; j++) {
+                        for (var i = 0; i < json_result[0].length; i++) {
+                            for (var j = 0; j < json_result[0][i].length; j++) {
                                 finderText = 'table tr:nth-child(' + (i+1) + ') td:nth-child(' + (j+1) + ')';
-                                if (result[i][j] === '*') {
-                                    result[i][j] = ' ';
+                                if (json_result[0][i][j] === '*') {
+                                    json_result[0][i][j] = ' ';
                                 }
-                                $(finderText).append(result[i][j]);
+                                $(finderText).append(json_result[0][i][j]);
                             }
                         }
+                        $('button#result').on("click", function () {
+                            var finderText;
+                            for (var i = 0; i < json_result[1].length; i++) {
+                                for (var j = 0; j < json_result[1][i].length; j++) {
+                                    finderText = 'table tr:nth-child(' + (i + 1) + ') td:nth-child(' + (j + 1) + ')';
+                                    if (json_result[1][i][j] === '*') {
+                                        json_result[1][i][j] = ' ';
+                                    }
+                                    $(finderText).empty();
+                                    $(finderText).append(json_result[1][i][j]);
+                                }
+                            }
+                        });
 
 
                     })
                 });
+
             } else {
                 $('form p').text("Неправильный тип файла, должен быть только .txt файл");
             }
         }
-
-    });
-
-    $('button#result').on("click", function () {
 
     });
 });

@@ -5,9 +5,11 @@
  * Date: 10.10.2018
  * Time: 14:47
  */
+require_once 'ArrayModel.php';
 
 class MainModel extends Model
 {
+    private static $func_counter = 0;
 
     public function putFileToArray($file)
     {
@@ -15,166 +17,248 @@ class MainModel extends Model
         for ($i = 0; $i < count($array); $i++) {
             $array[$i] = explode(' ', $array[$i]);
         }
+        return $array;
+    }
 
-        $json = json_encode($array);
-        header('Content-type: application/json');
-        echo $json;
+    /** Аналог функции array_intersect(), но многократно быстрее при условии отсортированных заранее массивов
+     * @param $a1 - первый массив
+     * @param $a2 - второй массив
+     * @return array - схождение массивов
+     */
+    private function intersect(&$a1, &$a2)
+    {
+        if ($a1 === $a2) return ($a1);
+        $a3 = array();
+        $b2 = current($a2);
+        if ($b2 !== false) foreach ($a1 as $b1) {
+            while ($b1 > $b2) {
+                $b2 = next($a2);
+                if ($b2 === false) break(2);
+            }
+            if ($b2 == $b1) $a3[] = $b1;
+        }
+        return $a3;
+    }
 
-        $example_arr = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+    public function analyzeArrays($array)
+    {
+        $array_model = new ArrayModel();
+        $hdiff = $array_model->makeHorizontalArray($array);
+        $new_vdiff = $array_model->makeVerticalArray($array);
+        $new_square = $array_model->makeSquareArray($array);
 
-        // Формирование массива возможных значений по горизонтали
-        for ($i = 0; $i < count($array); $i++) {
-            $keys[$i] = array_keys(array_diff($array[$i], $example_arr));
-            $ediff[$i] = array_diff($example_arr, $array[$i]);
-        }
-        for ($i = 0; $i < count($ediff); $i++) {
-            for ($j = 0; $j < count($ediff[$i]); $j++) {
-                $nediff[$i][] = array_values($ediff[$i]);
-            }
-        }
-        for ($i = 0; $i < count($array); $i++) {
-            for ($j = 0; $j < count($keys[$i]); $j++) {
-                $hdiff[$i][$keys[$i][$j]] = $nediff[$i][$j];
-            }
-        }
-        echo $hdiff;
-
-        //Формирование массива возможных значений по вертикали
-        for ($i = 0; $i < count($array); $i++) {
-            $column[$i] = array_column($array, $i);
-        }
-
-        for ($i = 0; $i < count($column); $i++) {
-            $keys[$i] = array_keys(array_diff($column[$i], $example_arr));
-            $ediff[$i] = array_diff($example_arr, $column[$i]);
-        }
-        $nediff = null;
-        for ($i = 0; $i < count($ediff); $i++) {
-            for ($j = 0; $j < count($ediff[$i]); $j++) {
-                $nediff[$i][] = array_values($ediff[$i]);
-            }
-        }
-        for ($i = 0; $i < count($array); $i++) {
-            for ($j = 0; $j < count($keys[$i]); $j++) {
-                $vdiff[$i][$keys[$i][$j]] = $nediff[$i][$j];
-            }
-        }
-        echo $vdiff;
-        //Приведение массива к горизонтальным координатам
-        for ($i = 0; $i < count($vdiff); $i++) {
-            $keys[$i] = array_keys($vdiff[$i]);
-        }
-        for ($i = 0; $i < count($vdiff); $i++) {
-            foreach ($keys[$i] as $k) {
-                $new_vdiff[$k][$i] = $vdiff[$i][$k];
-            }
-        }
-        echo $new_vdiff;
-
-        //Формирование массива возможных значений по квадратам
-        $k = 0;
-        for ($i = 0; $i < count($array); $i += 3) {
-            for ($j = 0; $j < count($array); $j += 3) {
-                $slice_1 = array_slice($array[$i], $j, 3);
-                $slice_2 = array_slice($array[$i + 1], $j, 3);
-                $slice_3 = array_slice($array[$i + 2], $j, 3);
-                $square[$k] = array_merge($slice_1, $slice_2, $slice_3);
-                $k++;
-            }
-        }
-
-        for ($i = 0; $i < count($square); $i++) {
-            $keys[$i] = array_keys(array_diff($square[$i], $example_arr));
-            $ediff[$i] = array_diff($example_arr, $square[$i]);
-        }
-        $nediff = null;
-        for ($i = 0; $i < count($ediff); $i++) {
-            for ($j = 0; $j < count($ediff[$i]); $j++) {
-                $nediff[$i][] = array_values($ediff[$i]);
-            }
-        }
-        for ($i = 0; $i < count($array); $i++) {
-            for ($j = 0; $j < count($keys[$i]); $j++) {
-                $sdiff[$i][$keys[$i][$j]] = $nediff[$i][$j];
-            }
-        }
-        echo $sdiff;
-
-        //Преобразовываем массив по квадратам в горизонтальный массив
-        $m = 0;
-        $k = 0;
-        $l = 0;
+        //Сравниваем массивы попарно
+        //Сравниваем первую пару
         for ($i = 0; $i < 9; $i++) {
-            if ($i > 0 && $i % 3 == 0) {
-                $l += 3;
-                $m = 0;
+            for ($j = 0; $j < 9; $j++) {
+                $hdiff[$i][$j] = $this->intersect($hdiff[$i][$j], $new_vdiff[$i][$j]);
+//                $hdiff[$i][$j] = array_intersect($hdiff[$i][$j], $new_vdiff[$i][$j], $new_square[$i][$j]);
             }
-            $k = $k + $l;
-            for ($j = 0; $j < 9; $j += 3) {
-                $new_square[$i][$j] = $sdiff[$k][$m];
-                $new_square[$i][$j + 1] = $sdiff[$k][$m + 1];
-                $new_square[$i][$j + 2] = $sdiff[$k][$m + 2];
-                $k++;
-                if ($k % 3 == 0) {
-                    $k = 0;
-                    $m += 3;
+        }
+
+        //Удаляем пустые значения
+        $hdiff = $array_model->removeNullCells($hdiff);
+
+        //Сравниваем вторую пару
+        for ($i = 0; $i < 9; $i++) {
+            for ($j = 0; $j < 9; $j++) {
+                $hdiff[$i][$j] = $this->intersect($hdiff[$i][$j], $new_square[$i][$j]);
+//                $hdiff[$i][$j] = array_intersect($hdiff[$i][$j], $new_square[$i][$j]);
+            }
+        }
+        //Удаляем пустые значения
+        $hdiff = $array_model->removeNullCells($hdiff);
+
+        ksort($hdiff);
+        $duples_hor = null;
+
+        //Находим дупликаты в горизонтальном направлении
+        for ($i = 0; $i < 9; $i++) {
+            $m = 0;
+            for ($j = 0; $j < 9; $j++) {
+                $m++;
+                $hit_counter = 1;
+                $compares_keys_x = null;
+                for ($k = $m; $k < 9; $k++) {
+                    if (count($hdiff[$i][$j]) > 0 && count($hdiff[$i][$j]) == count($hdiff[$i][$k])) {
+                        $differ = array_diff($hdiff[$i][$j], $hdiff[$i][$k]);
+                        if (count($differ) == 0 && $differ !== null) {
+                            $hit_counter++;
+                            $duples_hor[$i][$j] = $hdiff[$i][$j];
+                            $duples_hor[$i][$k] = $hdiff[$i][$k];
+                            $compares_keys_x[] = $k;
+                        }
+                    }
+                }
+                if ($hit_counter == 2 && count($hdiff[$i][$j]) == 2) {
+                    foreach (array_values($hdiff[$i][$j]) as $value) {
+                        foreach (array_keys($hdiff[$i]) as $key1) {
+                            if ($key1 != $j && $key1 != $compares_keys_x[0]) {
+                                foreach (array_keys($hdiff[$i][$key1]) as $key2) {
+                                    if ($hdiff[$i][$key1][$key2] == $value) {
+                                        unset($hdiff[$i][$key1][$key2]);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if ($hit_counter == 3 && count($hdiff[$i][$j]) == 3) {
+                    foreach (array_values($hdiff[$i][$j]) as $value) {
+                        foreach (array_keys($hdiff[$i]) as $key1) {
+                            if ($key1 != $j && $key1 != $compares_keys_x[0] && $key1 != $compares_keys_x[1]) {
+                                foreach (array_keys($hdiff[$i][$key1]) as $key2) {
+                                    if ($hdiff[$i][$key1][$key2] == $value) {
+                                        unset($hdiff[$i][$key1][$key2]);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if ($hit_counter == 4 && count($hdiff[$i][$j]) == 4) {
+                    foreach (array_values($hdiff[$i][$j]) as $value) {
+                        foreach (array_keys($hdiff[$i]) as $key1) {
+                            if ($key1 != $j && $key1 != $compares_keys_x[0] && $key1 != $compares_keys_x[1] && $key1 != $compares_keys_x[2]) {
+                                foreach (array_keys($hdiff[$i][$key1]) as $key2) {
+                                    if ($hdiff[$i][$key1][$key2] == $value) {
+                                        unset($hdiff[$i][$key1][$key2]);
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
 
         //Удаляем пустые значения
+        $duples_hor = $array_model->removeNullCells($duples_hor);
 
-        for ($i = 0; $i < count($new_square); $i++) {
-            for ($j = 0; $j < count($new_square); $j++) {
-                if ($new_square[$i][$j] == null) {
-                    unset($new_square[$i][$j]);
+        ksort($hdiff);
+        $duples_vert = null;
+
+        //Находим дупликаты в вертикальном направлении
+        $m = 0;
+        for ($i = 0; $i < 9; $i++) {
+            $m++;
+            for ($j = 0; $j < 9; $j++) {
+                $k = 0;
+                $hit_counter = 1;
+                $compares_keys_y = null;
+                for ($k = $m; $k < 9; $k++) {
+                    if (count($hdiff[$i][$j]) > 0 && count($hdiff[$i][$j]) == count($hdiff[$k][$j])) {
+                        $differ = array_diff($hdiff[$i][$j], $hdiff[$k][$j]);
+                        if (count($differ) == 0 && $differ !== null) {
+                            $hit_counter++;
+                            $duples_vert[$i][$j] = $hdiff[$i][$j];
+                            $duples_vert[$k][$j] = $hdiff[$k][$j];
+                            $compares_keys_y[] = $k;
+                        }
+                    }
+                }
+                if ($hit_counter == 2 && count($hdiff[$i][$j]) == 2) {
+                    foreach (array_values($hdiff[$i][$j]) as $value) {
+                        $column = null;
+                        $stroke = 0;
+                        foreach ($hdiff as $item) {
+                            if (array_key_exists($j, $item)) {
+                                $column[] = $stroke;
+                            }
+                            $stroke++;
+                        }
+                        foreach ($column as $key1) {
+                            if ($key1 != $compares_keys_y[0] && $key1 != $i) {
+                                foreach (array_keys($hdiff[$key1][$j]) as $key2) {
+                                    if ($hdiff[$key1][$j][$key2] == $value) {
+                                        unset($hdiff[$key1][$j][$key2]);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if ($hit_counter == 3 && count($hdiff[$i][$j]) == 3) {
+                    foreach (array_values($hdiff[$i][$j]) as $value) {
+                        $column = null;
+                        $stroke = 0;
+                        foreach ($hdiff as $item) {
+                            if (array_key_exists($j, $item)) {
+                                $column[] = $stroke;
+                            }
+                            $stroke++;
+                        }
+                        foreach ($column as $key1) {
+                            if ($key1 != $compares_keys_y[0] && $key1 != $i && $key1 != $compares_keys_y[1]) {
+                                foreach (array_keys($hdiff[$key1][$j]) as $key2) {
+                                    if ($hdiff[$key1][$j][$key2] == $value) {
+                                        unset($hdiff[$key1][$j][$key2]);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if ($hit_counter == 4 && count($hdiff[$i][$j]) == 4) {
+                    foreach (array_values($hdiff[$i][$j]) as $value) {
+                        $column = null;
+                        $stroke = 0;
+                        foreach ($hdiff as $item) {
+                            if (array_key_exists($j, $item)) {
+                                $column[] = $stroke;
+                            }
+                            $stroke++;
+                        }
+                        foreach ($column as $key1) {
+                            if ($key1 != $compares_keys_y[0] && $key1 != $i && $key1 != $compares_keys_y[1] && $key1 != $compares_keys_y[2]) {
+                                foreach (array_keys($hdiff[$key1][$j]) as $key2) {
+                                    if ($hdiff[$key1][$j][$key2] == $value) {
+                                        unset($hdiff[$key1][$j][$key2]);
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
-        echo $new_square;
 
-        //Сравниваем массивы попарно
+        //Удаляем пустые значения
+        $duples_vert = $array_model->removeNullCells($duples_vert);
 
-        for ($i = 0; $i < count($hdiff); $i++) {
-            for ($j = 0; $j < count($hdiff[$i]); $j++) {
-                $hdiff[$i][$j] = array_intersect($hdiff[$i][$j], $new_vdiff[$i][$j]);
-            }
-        }
-        for ($i = 0; $i < count($hdiff); $i++) {
-            for ($j = 0; $j < count($hdiff); $j++) {
-                if ($hdiff[$i][$j] == null) {
-                    unset($hdiff[$i][$j]);
-                }
-            }
-        }
-        echo $hdiff;
-        for ($i = 0; $i < count($hdiff); $i++) {
-            for ($j = 0; $j < count($hdiff[$i]); $j++) {
-                $hdiff[$i][$j] = array_intersect($hdiff[$i][$j], $new_square[$i][$j]);
-            }
-        }
-        for ($i = 0; $i < count($hdiff); $i++) {
-            for ($j = 0; $j < count($hdiff); $j++) {
-                if ($hdiff[$i][$j] == null) {
-                    unset($hdiff[$i][$j]);
-                }
-            }
-        }
-        echo $hdiff;
+        //Находим дупликаты в квардратах
+
 
         //Теперь вставляем единственно возможные значения в изначальный массив
 
         for ($i = 0; $i < count($hdiff); $i++) {
             for ($j = 0; $j < count($hdiff); $j++) {
                 if (count($hdiff[$i][$j]) == 1) {
-                    $array[$i][$j]=array_values($hdiff[$i][$j])[0];
+                    $array[$i][$j] = array_values($hdiff[$i][$j])[0];
                 }
             }
         }
-        echo $array;
+
+        //Если остались незаполненные ячейки, исполняем функцию заново, до тех пор пока не заполнятся все ячейки
+        for ($i = 0; $i < count($array); $i++) {
+            for ($j = 0; $j < count($array); $j++) {
+                if ($array[$i][$j] == "*") {
+                    self::$func_counter++;
+                    $array = $this->analyzeArrays($array);
+                    break(2);
+                }
+            }
+        }
+//        echo $fc=self::$func_counter;
+        return $array;
+
+    }
+
+
+
 //TODO:Обернуть все конструкции в функции, новый массив передать в начало и зациклить до получения готового массива
 //        return $array;
-    }
+
 
 //    public function getData($file)
 //    {
