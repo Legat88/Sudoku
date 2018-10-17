@@ -13,15 +13,58 @@ class ArrayModel
     public function removeNullCells($array)
     {
         for ($i = 0; $i < count($array); $i++) {
-            for ($j = 0; $j < count($array); $j++) {
-                if ($array[$i][$j] == null) {
-                    unset($array[$i][$j]);
+            if ($array[$i] == null) {
+                unset($array[$i]);
+            } else {
+                for ($j = 0; $j < count($array); $j++) {
+                    if ($array[$i][$j] == null) {
+                        unset($array[$i][$j]);
+                    }
                 }
             }
         }
         return $array;
     }
 
+    public function squareToStroke($array)
+    {
+        $k = 0;
+        for ($i = 0; $i < count($array); $i += 3) {
+            for ($j = 0; $j < count($array); $j += 3) {
+                $slice_1 = array_slice($array[$i], $j, 3);
+                $slice_2 = array_slice($array[$i + 1], $j, 3);
+                $slice_3 = array_slice($array[$i + 2], $j, 3);
+                $square[$k] = array_merge($slice_1, $slice_2, $slice_3);
+                $k++;
+            }
+        }
+        return $square;
+    }
+
+    public function strokeToSquare($sdiff)
+    {
+        $m = 0;
+        $k = 0;
+        $l = 0;
+        for ($i = 0; $i < 9; $i++) {
+            if ($i > 0 && $i % 3 == 0) {
+                $l += 3;
+                $m = 0;
+            }
+            $k = $k + $l;
+            for ($j = 0; $j < 9; $j += 3) {
+                $new_square[$i][$j] = $sdiff[$k][$m];
+                $new_square[$i][$j + 1] = $sdiff[$k][$m + 1];
+                $new_square[$i][$j + 2] = $sdiff[$k][$m + 2];
+                $k++;
+                if ($k % 3 == 0) {
+                    $k = 0;
+                    $m += 3;
+                }
+            }
+        }
+        return $new_square;
+    }
     private function makeDifferenceFromExample($array)
     {
         //Вычисляем массив возможных значений
@@ -93,17 +136,10 @@ class ArrayModel
     public function makeSquareArray($array)
     {
         //Формирование массива возможных значений по квадратам
-        $k = 0;
-        for ($i = 0; $i < count($array); $i += 3) {
-            for ($j = 0; $j < count($array); $j += 3) {
-                $slice_1 = array_slice($array[$i], $j, 3);
-                $slice_2 = array_slice($array[$i + 1], $j, 3);
-                $slice_3 = array_slice($array[$i + 2], $j, 3);
-                $square[$k] = array_merge($slice_1, $slice_2, $slice_3);
-                $k++;
-            }
-        }
+        //Преобразование квадратной секции в горизонтальный массив
+        $square = $this->squareToStroke($array);
 
+        //Поиск различий с эталонным массивом и запись возможных значений в массив
         $result = $this->makeDifferenceFromExample($square);
         $keys = $result[0];
         $nediff = $result[1];
@@ -114,27 +150,8 @@ class ArrayModel
             }
         }
 
-        //Преобразовываем массив по квадратам в горизонтальный массив
-        $m = 0;
-        $k = 0;
-        $l = 0;
-        for ($i = 0; $i < 9; $i++) {
-            if ($i > 0 && $i % 3 == 0) {
-                $l += 3;
-                $m = 0;
-            }
-            $k = $k + $l;
-            for ($j = 0; $j < 9; $j += 3) {
-                $new_square[$i][$j] = $sdiff[$k][$m];
-                $new_square[$i][$j + 1] = $sdiff[$k][$m + 1];
-                $new_square[$i][$j + 2] = $sdiff[$k][$m + 2];
-                $k++;
-                if ($k % 3 == 0) {
-                    $k = 0;
-                    $m += 3;
-                }
-            }
-        }
+        //Преобразовываем горизонтального массива обратно в квадратную секцию
+        $new_square = $this->strokeToSquare($sdiff);
 
         //Удаляем пустые значения
 

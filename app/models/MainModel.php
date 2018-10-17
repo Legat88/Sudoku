@@ -40,39 +40,8 @@ class MainModel extends Model
         return $a3;
     }
 
-    public function analyzeArrays($array)
+    private function duplesHorizontalArray($hdiff)
     {
-        $array_model = new ArrayModel();
-        $hdiff = $array_model->makeHorizontalArray($array);
-        $new_vdiff = $array_model->makeVerticalArray($array);
-        $new_square = $array_model->makeSquareArray($array);
-
-        //Сравниваем массивы попарно
-        //Сравниваем первую пару
-        for ($i = 0; $i < 9; $i++) {
-            for ($j = 0; $j < 9; $j++) {
-                $hdiff[$i][$j] = $this->intersect($hdiff[$i][$j], $new_vdiff[$i][$j]);
-//                $hdiff[$i][$j] = array_intersect($hdiff[$i][$j], $new_vdiff[$i][$j], $new_square[$i][$j]);
-            }
-        }
-
-        //Удаляем пустые значения
-        $hdiff = $array_model->removeNullCells($hdiff);
-
-        //Сравниваем вторую пару
-        for ($i = 0; $i < 9; $i++) {
-            for ($j = 0; $j < 9; $j++) {
-                $hdiff[$i][$j] = $this->intersect($hdiff[$i][$j], $new_square[$i][$j]);
-//                $hdiff[$i][$j] = array_intersect($hdiff[$i][$j], $new_square[$i][$j]);
-            }
-        }
-        //Удаляем пустые значения
-        $hdiff = $array_model->removeNullCells($hdiff);
-
-        ksort($hdiff);
-        $duples_hor = null;
-
-        //Находим дупликаты в горизонтальном направлении
         for ($i = 0; $i < 9; $i++) {
             $m = 0;
             for ($j = 0; $j < 9; $j++) {
@@ -131,14 +100,11 @@ class MainModel extends Model
                 }
             }
         }
+        return $hdiff;
+    }
 
-        //Удаляем пустые значения
-        $duples_hor = $array_model->removeNullCells($duples_hor);
-
-        ksort($hdiff);
-        $duples_vert = null;
-
-        //Находим дупликаты в вертикальном направлении
+    private function duplesVerticalArray($hdiff)
+    {
         $m = 0;
         for ($i = 0; $i < 9; $i++) {
             $m++;
@@ -222,12 +188,71 @@ class MainModel extends Model
                 }
             }
         }
+        return $hdiff;
+    }
+
+    public function analyzeArrays($array)
+    {
+        $array_model = new ArrayModel();
+        $hdiff = $array_model->makeHorizontalArray($array);
+        $new_vdiff = $array_model->makeVerticalArray($array);
+        $new_square = $array_model->makeSquareArray($array);
+
+        //Сравниваем массивы попарно
+        //Сравниваем первую пару
+        for ($i = 0; $i < 9; $i++) {
+            for ($j = 0; $j < 9; $j++) {
+                $hdiff[$i][$j] = $this->intersect($hdiff[$i][$j], $new_vdiff[$i][$j]);
+//                $hdiff[$i][$j] = array_intersect($hdiff[$i][$j], $new_vdiff[$i][$j], $new_square[$i][$j]);
+            }
+        }
+
+        //Удаляем пустые значения
+        $hdiff = $array_model->removeNullCells($hdiff);
+
+        //Сравниваем вторую пару
+        for ($i = 0; $i < 9; $i++) {
+            for ($j = 0; $j < 9; $j++) {
+                $hdiff[$i][$j] = $this->intersect($hdiff[$i][$j], $new_square[$i][$j]);
+//                $hdiff[$i][$j] = array_intersect($hdiff[$i][$j], $new_square[$i][$j]);
+            }
+        }
+        //Удаляем пустые значения
+        $hdiff = $array_model->removeNullCells($hdiff);
+
+        ksort($hdiff);
+        $duples_hor = null;
+
+        //Находим дупликаты в горизонтальном направлении
+        $hdiff = $this->duplesHorizontalArray($hdiff);
+
+        //Удаляем пустые значения
+        $duples_hor = $array_model->removeNullCells($duples_hor);
+
+        ksort($hdiff);
+        $duples_vert = null;
+
+        //Находим дупликаты в вертикальном направлении
+        $hdiff = $this->duplesVerticalArray($hdiff);
 
         //Удаляем пустые значения
         $duples_vert = $array_model->removeNullCells($duples_vert);
 
-        //Находим дупликаты в квардратах
+        //Находим дупликаты в квадратах
+        for ($i = 0; $i < 9; $i++) {
+            for ($j = 0; $j < 9; $j++) {
+                if (!isset($hdiff[$i][$j])) {
+                    $hdiff[$i][$j] = null;
+                }
+            }
+            ksort($hdiff[$i]);
+        }
 
+        $hdiff = $array_model->squareToStroke($hdiff);
+        $hdiff = $array_model->removeNullCells($hdiff);
+        $hdiff = $this->duplesHorizontalArray($hdiff);
+        $hdiff = $array_model->strokeToSquare($hdiff);
+        $hdiff = $array_model->removeNullCells($hdiff);
 
         //Теперь вставляем единственно возможные значения в изначальный массив
 
