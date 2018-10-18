@@ -10,6 +10,9 @@ require_once 'ArrayModel.php';
 class MainModel extends Model
 {
     private static $func_counter = 0;
+    private static $modified = false;
+    private static $hdiff1;
+    private static $hdiff2;
 
     public function putFileToArray($file)
     {
@@ -18,6 +21,36 @@ class MainModel extends Model
             $array[$i] = explode(' ', $array[$i]);
         }
         return $array;
+    }
+
+    private function splitArrayDelFirstElement($hdiff)
+    {
+        for ($i = 0; $i < count($hdiff); $i++) {
+            for ($j = 0; $j < count($hdiff); $j++) {
+                if (count($hdiff[$i][$j]) == 2) {
+                    current($hdiff[$i][$j]);
+                    $key_start = key($hdiff[$i][$j]);
+                    unset($hdiff[$i][$j][$key_start]);
+                    break(2);
+                }
+            }
+        }
+        return $hdiff;
+    }
+
+    private function splitArrayDelSecondElement($hdiff)
+    {
+        for ($i = 0; $i < count($hdiff); $i++) {
+            for ($j = 0; $j < count($hdiff); $j++) {
+                if (count($hdiff[$i][$j]) == 2) {
+                    end($hdiff[$i][$j]);
+                    $key_end = key($hdiff[$i][$j]);
+                    unset($hdiff[$i][$j][$key_end]);
+                    break(2);
+                }
+            }
+        }
+        return $hdiff;
     }
 
     /** Аналог функции array_intersect(), но многократно быстрее при условии отсортированных заранее массивов
@@ -255,11 +288,40 @@ class MainModel extends Model
         $hdiff = $array_model->removeNullCells($hdiff);
 
         //Теперь вставляем единственно возможные значения в изначальный массив
-
+        $inserts = 0;
         for ($i = 0; $i < count($hdiff); $i++) {
             for ($j = 0; $j < count($hdiff); $j++) {
                 if (count($hdiff[$i][$j]) == 1) {
+                    $inserts++;
                     $array[$i][$j] = array_values($hdiff[$i][$j])[0];
+                }
+            }
+        }
+//        echo($inserts);
+        if ($inserts == 0) {
+            if (self::$modified == false) {
+                self::$hdiff1 = $this->splitArrayDelSecondElement($hdiff);
+                self::$hdiff2 = $this->splitArrayDelFirstElement($hdiff);
+//                $hdiff1 = $this->splitArrayDelSecondElement($hdiff);
+//                $hdiff2 = $this->splitArrayDelFirstElement($hdiff);
+                $hdiff = self::$hdiff1;
+                self::$modified = true;
+                for ($i = 0; $i < count($hdiff); $i++) {
+                    for ($j = 0; $j < count($hdiff); $j++) {
+                        if (count($hdiff[$i][$j]) == 1) {
+                            $array[$i][$j] = array_values($hdiff[$i][$j])[0];
+                        }
+                    }
+                }
+            } else {
+                $hdiff = self::$hdiff2;
+                self::$modified = false;
+                for ($i = 0; $i < count($hdiff); $i++) {
+                    for ($j = 0; $j < count($hdiff); $j++) {
+                        if (count($hdiff[$i][$j]) == 1) {
+                            $array[$i][$j] = array_values($hdiff[$i][$j])[0];
+                        }
+                    }
                 }
             }
         }

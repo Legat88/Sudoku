@@ -27,13 +27,6 @@ class MainPageController extends PageController
         $array = $model->putFileToArray($file);
         $initial = $array;
         $result = $model->analyzeArrays($array);
-//        for ($i = 0; $i < count($result); $i++) {
-//            for ($j = 0; $j < count($result); $j++) {
-//                if ($result[$i][$j] == "*") {
-//                    $array=$this->analyzeArrays($array);
-//                }
-//            }
-//        }
         $json_array = array($initial, $result);
         $json = json_encode($json_array);
         echo $json;
