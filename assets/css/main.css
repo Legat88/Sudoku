@@ -48,6 +48,7 @@ table {
     margin-top:60px;
     width: 300px !important;
     height: 300px;
+    display: none;
 }
 table td {
     padding: 0 !important;
@@ -76,10 +77,6 @@ table tr td:nth-child(7) {
 table tr td:last-child {
     border-right-width: 3px;
 }
-
-/*i {*/
-/*display: inline-block;*/
-/*}*/
 
 
 

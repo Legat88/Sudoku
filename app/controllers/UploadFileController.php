@@ -15,16 +15,11 @@ class UploadFileController
         $fullname = $name. '.' . $fullname[1];
         $uploadfile = $uploaddir . $fullname;
 
-//TODO: Убрать в конце отладочный текст
         if (move_uploaded_file($_FILES['file']['tmp_name'], $uploadfile)) {
             return $uploadfile;
         } else {
-            echo "Возможная атака с помощью файловой загрузки!\n";
+            header('Location: /');
         }
-
-        echo 'Некоторая отладочная информация:';
-        print_r($_FILES);
-
     }
 
 }

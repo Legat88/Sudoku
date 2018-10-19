@@ -34,15 +34,6 @@ class Router
             if (file_exists($controller_path)) {
                 include $controller_path;
             }
-        } elseif ($path == '/show') {
-            if (file_exists($model_path)) {
-                include $model_path;
-            }
-            if (file_exists($controller_path)) {
-                include $controller_path;
-            }
-            $action_name = 'showTable';
-
         } elseif ($path == '/NotFoundPage') {
             $controller_name = 'NotFoundPageController';
             $controller_file = $controller_name . '.php';

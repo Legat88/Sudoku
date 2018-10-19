@@ -13,23 +13,7 @@ class MainPageController extends PageController
         $this->view->generate('mainpage.php', 'template.php', array(
             'title' => 'Главная'
         ));
-//        if (count($_FILES) > 0) {
-//            $this->showTable();
-//        }
     }
 
-    function showTable()
-    {
-        include 'UploadFileController.php';
-        $upload = new UploadFileController();
-        $file=$upload->Upload();
-        $model = new MainModel();
-        $array = $model->putFileToArray($file);
-        $initial = $array;
-        $result = $model->analyzeArrays($array);
-        $json_array = array($initial, $result);
-        $json = json_encode($json_array);
-        echo $json;
-    }
 
 }

@@ -1,11 +1,8 @@
 $(document).ready(function () {
     var myApp = {};
     $('i#circle').hide();
-    $('table').hide();
     var table_showed = 0;
-    $('form input').on("change", function kek() {
-        var files = this.files;
-        myApp.files = files;
+    $('form input').on("change", function () {
         var file = this.files[0],
             fileName = file.name,
             extension = fileName.split("."),
@@ -23,7 +20,6 @@ $(document).ready(function () {
                 $('form p').text("Неправильный тип файла, должен быть только .txt файл");
             }
         }
-        return files;
 
     });
     $('button#show').on("click", function (e) {
@@ -32,7 +28,7 @@ $(document).ready(function () {
         form_data.set('file', myApp.file);
 
         $.ajax({
-            url: "/show",
+            url: "handler.php",
             type: "POST",
             dataType: "json",
             data: form_data,
@@ -43,7 +39,7 @@ $(document).ready(function () {
             var json_result = result;
             $('form p').text("Файл " + myApp.fileName + " загружен");
             if (table_showed === 0) {
-                $('table').show();
+                $('table').css("display", "table");
                 table_showed = 1;
             }
             var finderText;

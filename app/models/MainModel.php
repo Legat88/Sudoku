@@ -5,10 +5,12 @@
  * Date: 10.10.2018
  * Time: 14:47
  */
+
 require_once 'ArrayModel.php';
 
 class MainModel extends Model
 {
+
     private static $func_counter = 0;
     private static $modified = false;
     private static $hdiff1;
@@ -23,6 +25,10 @@ class MainModel extends Model
         return $array;
     }
 
+    /** Первая ветка массива с удалением первого элемента из пары возможных значений
+     * @param $hdiff
+     * @return mixed
+     */
     private function splitArrayDelFirstElement($hdiff)
     {
         for ($i = 0; $i < count($hdiff); $i++) {
@@ -38,6 +44,10 @@ class MainModel extends Model
         return $hdiff;
     }
 
+    /** Вторая ветка массива с удалением второго элемента из пары возможных значений
+     * @param $hdiff
+     * @return mixed
+     */
     private function splitArrayDelSecondElement($hdiff)
     {
         for ($i = 0; $i < count($hdiff); $i++) {
@@ -73,6 +83,10 @@ class MainModel extends Model
         return $a3;
     }
 
+    /** Удаляет пары, тройки и четверки возможных значений из строки
+     * @param $hdiff
+     * @return mixed
+     */
     private function duplesHorizontalArray($hdiff)
     {
         for ($i = 0; $i < 9; $i++) {
@@ -136,6 +150,10 @@ class MainModel extends Model
         return $hdiff;
     }
 
+    /** Удаляет пары, тройки и четверки возможных значений из столбцов
+     * @param $hdiff
+     * @return mixed
+     */
     private function duplesVerticalArray($hdiff)
     {
         $m = 0;
@@ -224,6 +242,11 @@ class MainModel extends Model
         return $hdiff;
     }
 
+
+    /** Основная функция модели
+     * @param $array
+     * @return mixed
+     */
     public function analyzeArrays($array)
     {
         $array_model = new ArrayModel();
@@ -236,7 +259,6 @@ class MainModel extends Model
         for ($i = 0; $i < 9; $i++) {
             for ($j = 0; $j < 9; $j++) {
                 $hdiff[$i][$j] = $this->intersect($hdiff[$i][$j], $new_vdiff[$i][$j]);
-//                $hdiff[$i][$j] = array_intersect($hdiff[$i][$j], $new_vdiff[$i][$j], $new_square[$i][$j]);
             }
         }
 
@@ -247,7 +269,6 @@ class MainModel extends Model
         for ($i = 0; $i < 9; $i++) {
             for ($j = 0; $j < 9; $j++) {
                 $hdiff[$i][$j] = $this->intersect($hdiff[$i][$j], $new_square[$i][$j]);
-//                $hdiff[$i][$j] = array_intersect($hdiff[$i][$j], $new_square[$i][$j]);
             }
         }
         //Удаляем пустые значения
@@ -287,6 +308,7 @@ class MainModel extends Model
         $hdiff = $array_model->strokeToSquare($hdiff);
         $hdiff = $array_model->removeNullCells($hdiff);
 
+
         //Теперь вставляем единственно возможные значения в изначальный массив
         $inserts = 0;
         for ($i = 0; $i < count($hdiff); $i++) {
@@ -297,13 +319,12 @@ class MainModel extends Model
                 }
             }
         }
-//        echo($inserts);
+
+        //Если после всего анализа нет однозначных решений, то подбираются по очереди значения из пар
         if ($inserts == 0) {
             if (self::$modified == false) {
                 self::$hdiff1 = $this->splitArrayDelSecondElement($hdiff);
                 self::$hdiff2 = $this->splitArrayDelFirstElement($hdiff);
-//                $hdiff1 = $this->splitArrayDelSecondElement($hdiff);
-//                $hdiff2 = $this->splitArrayDelFirstElement($hdiff);
                 $hdiff = self::$hdiff1;
                 self::$modified = true;
                 for ($i = 0; $i < count($hdiff); $i++) {
@@ -336,7 +357,6 @@ class MainModel extends Model
                 }
             }
         }
-//        echo $fc=self::$func_counter;
         return $array;
 
     }
